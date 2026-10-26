@@ -5,117 +5,57 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#0d47a1">
     <title>Radar e Fulmini DPC</title>
-    
-    <!-- Riga per l'installazione come App -->
     <link rel="manifest" href="manifest.json">
-
-    <!-- Inclusione della libreria Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
     <style>
         body { padding: 0; margin: 0; }
         html, body, #map { height: 100%; width: 100vw; }
-        .leaflet-control-layers {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 14px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
+        .leaflet-control-layers { background: rgba(255, 255, 255, 0.95); padding: 10px; border-radius: 8px; font-size: 14px; max-height: 80vh; overflow-y: auto; }
         .leaflet-control-layers label { margin-bottom: 5px; display: block; }
     </style>
 </head>
 <body>
-
     <div id="map"></div>
-
     <script>
         var map = L.map('map').setView([42.5, 12.5], 6);
-
-        var baseMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         }).addTo(map);
-
+        
         var wmsUrl = 'https://radar-geowebcache.protezionecivile.it/service/wms';
 
-        // --- LAYER ATTIVI DI DEFAULT ---
-        var radarLayer = L.tileLayer.wms(wmsUrl, {
-            layers: 'radar:vmi',
-            format: 'image/png', transparent: true, opacity: 0.7,
-            attribution: 'Dati Radar: <a href="https://radar.protezionecivile.it/">DPC</a>'
-        }).addTo(map);
+        var radarLayer = L.tileLayer.wms(wmsUrl, { layers: 'radar:vmi', format: 'image/png', transparent: true, opacity: 0.7, attribution: 'DPC' }).addTo(map);
+        var fulminiLayer = L.tileLayer.wms(wmsUrl, { layers: 'radar:ltg', format: 'image/png', transparent: true, opacity: 1.0, attribution: 'DPC' }).addTo(map);
+        var sriLayer = L.tileLayer.wms(wmsUrl, { layers: 'radar:sri', format: 'image/png', transparent: true, opacity: 0.7 });
+        var srt1Layer = L.tileLayer.wms(wmsUrl, { layers: 'radar:srt1', format: 'image/png', transparent: true, opacity: 0.7 });
+        var srt3Layer = L.tileLayer.wms(wmsUrl, { layers: 'radar:srt3', format: 'image/png', transparent: true, opacity: 0.7 });
+        var nuvoleLayer = L.tileLayer.wms(wmsUrl, { layers: 'radar:ir108', format: 'image/png', transparent: true, opacity: 0.6 });
+        var hrdLayer = L.tileLayer.wms(wmsUrl, { layers: 'radar:hrd', format: 'image/png', transparent: true, opacity: 0.8 });
+        var sitesLayer = L.tileLayer.wms(wmsUrl, { layers: 'radar:sites', format: 'image/png', transparent: true, opacity: 1.0 });
 
-        var fulminiLayer = L.tileLayer.wms(wmsUrl, {
-            layers: 'radar:ltg',
-            format: 'image/png', transparent: true, opacity: 1.0,
-            attribution: 'Dati Fulmini: <a href="https://radar.protezionecivile.it/">DPC</a>'
-        }).addTo(map);
-
-        // --- ALTRI LAYER (verificati) ---
-        // Intensità Pioggia (SRI)
-        var sriLayer = L.tileLayer.wms(wmsUrl, {
-            layers: 'radar:sri', format: 'image/png', transparent: true, opacity: 0.7
-        });
-
-        // Cumulata 1h (SRT_1) - Il nome corretto è srt1
-        var srt1Layer = L.tileLayer.wms(wmsUrl, {
-            layers: 'radar:srt1', format: 'image/png', transparent: true, opacity: 0.7
-        });
-
-        // Cumulata 3h (SRT_3)
-        var srt3Layer = L.tileLayer.wms(wmsUrl, {
-            layers: 'radar:srt3', format: 'image/png', transparent: true, opacity: 0.7
-        });
-
-        // Temperature (TMP) - CORRETTO: il nome è 'radar:temperature'
-        var tempLayer = L.tileLayer.wms(wmsUrl, {
-            layers: 'radar:temperature', format: 'image/png', transparent: true, opacity: 0.7
-        });
-
-        // Copertura Nuvolosa (IR108)
-        var nuvoleLayer = L.tileLayer.wms(wmsUrl, {
-            layers: 'radar:ir108', format: 'image/png', transparent: true, opacity: 0.6
-        });
-
-        // Heavy Rain Detection (HRD)
-        var hrdLayer = L.tileLayer.wms(wmsUrl, {
-            layers: 'radar:hrd', format: 'image/png', transparent: true, opacity: 0.8
-        });
-
-        // Stato Radar (SITES)
-        var sitesLayer = L.tileLayer.wms(wmsUrl, {
-            layers: 'radar:sites', format: 'image/png', transparent: true, opacity: 1.0
-        });
-
-        // --- CONTROLLO DEI LAYER ---
         var overlays = {
             "Radar (VMI)": radarLayer,
             "Fulmini (LTG)": fulminiLayer,
             "Intensità Pioggia (SRI)": sriLayer,
             "Cumulata 1h (SRT_1)": srt1Layer,
             "Cumulata 3h (SRT_3)": srt3Layer,
-            "Temperature (TMP)": tempLayer,
             "Copertura Nuvolosa (IR108)": nuvoleLayer,
             "Allerta Piogge Intense (HRD)": hrdLayer,
             "Stato Radar (SITES)": sitesLayer
         };
-        
         L.control.layers(null, overlays, { collapsed: false }).addTo(map);
 
-        // --- AGGIORNAMENTO AUTOMATICO ---
         setInterval(function() {
             var now = Date.now();
             radarLayer.setParams({ _t: now });
             fulminiLayer.setParams({ _t: now });
             sriLayer.setParams({ _t: now });
             srt1Layer.setParams({ _t: now });
-            tempLayer.setParams({ _t: now });
             nuvoleLayer.setParams({ _t: now });
             hrdLayer.setParams({ _t: now });
-        }, 300000); // 5 minuti
+        }, 300000);
     </script>
 </body>
 </html>
