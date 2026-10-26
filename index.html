@@ -3,8 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#0d47a1">
     <title>Radar e Fulmini DPC</title>
     
+    <!-- Riga per l'installazione come App -->
+    <link rel="manifest" href="manifest.json">
+
     <!-- Inclusione della libreria Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -39,7 +43,7 @@
         var wmsUrl = 'https://radar-geowebcache.protezionecivile.it/service/wms';
 
         // 4. Crea il layer per il Radar (VMI - Vertical Maximum Intensity)
-        // Si aggiorna ogni 5 minuti [citation:1]
+        // Si aggiorna ogni 5 minuti 
         var radarLayer = L.tileLayer.wms(wmsUrl, {
             layers: 'radar:vmi',
             format: 'image/png',
@@ -49,7 +53,7 @@
         }).addTo(map); // Aggiunto alla mappa di default
 
         // 5. Crea il layer per i Fulmini (LTG - Lightning)
-        // Si aggiorna ogni 10 minuti [citation:1][citation:12]
+        // Si aggiorna ogni 10 minuti 
         var fulminiLayer = L.tileLayer.wms(wmsUrl, {
             layers: 'radar:ltg', // Nome del layer per i fulmini
             format: 'image/png',
