@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Radar e Fulmini DPC</title>
+    
+    <!-- Inclusione della libreria Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        body { padding: 0; margin: 0; }
+        html, body, #map { height: 100%; width: 100vw; }
+        /* Migliora la leggibilità del controllo dei layer */
+        .leaflet-control-layers {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <script>
+        // 1. Inizializza la mappa (centrata sull'Italia)
+        var map = L.map('map').setView([42.5, 12.5], 6);
+
+        // 2. Aggiungi la mappa di base (OpenStreetMap)
+        var baseMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // 3. Definisci l'URL del servizio WMS della Protezione Civile
+        var wmsUrl = 'https://radar-geowebcache.protezionecivile.it/service/wms';
+
+        // 4. Crea il layer per il Radar (VMI - Vertical Maximum Intensity)
+        // Si aggiorna ogni 5 minuti [citation:1]
+        var radarLayer = L.tileLayer.wms(wmsUrl, {
+            layers: 'radar:vmi',
+            format: 'image/png',
+            transparent: true,
+            opacity: 0.7,
+            attribution: 'Dati Radar: <a href="https://radar.protezionecivile.it/">DPC</a>'
+        }).addTo(map); // Aggiunto alla mappa di default
+
+        // 5. Crea il layer per i Fulmini (LTG - Lightning)
+        // Si aggiorna ogni 10 minuti [citation:1][citation:12]
+        var fulminiLayer = L.tileLayer.wms(wmsUrl, {
+            layers: 'radar:ltg', // Nome del layer per i fulmini
+            format: 'image/png',
+            transparent: true,
+            opacity: 1.0, // I fulmini sono spesso puntiformi, meglio tenerli opachi
+            attribution: 'Dati Fulmini: <a href="https://radar.protezionecivile.it/">DPC</a>'
+        }).addTo(map); // Aggiunto alla mappa di default
+
+        // 6. Aggiungi il controllo per attivare/disattivare i layer
+        var overlays = {
+            "Radar (VMI)": radarLayer,
+            "Fulmini (LTG)": fulminiLayer
+        };
+        
+        L.control.layers(null, overlays, { collapsed: false }).addTo(map);
+
+        // 7. Aggiornamento automatico per evitare la cache del browser
+        // Forza il ricaricamento delle immagini ogni 5 minuti
+        setInterval(function() {
+            radarLayer.setParams({ _t: Date.now() });
+            fulminiLayer.setParams({ _t: Date.now() });
+        }, 300000); // 300.000 ms = 5 minuti
+
+    </script>
+</body>
+</html>
