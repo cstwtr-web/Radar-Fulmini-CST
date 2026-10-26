@@ -18,10 +18,16 @@
         html, body, #map { height: 100%; width: 100vw; }
         /* Migliora la leggibilità del controllo dei layer */
         .leaflet-control-layers {
-            background: rgba(255, 255, 255, 0.9);
-            padding: 8px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px;
             border-radius: 8px;
             font-size: 14px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .leaflet-control-layers label {
+            margin-bottom: 5px;
+            display: block;
         }
     </style>
 </head>
@@ -42,40 +48,125 @@
         // 3. Definisci l'URL del servizio WMS della Protezione Civile
         var wmsUrl = 'https://radar-geowebcache.protezionecivile.it/service/wms';
 
-        // 4. Crea il layer per il Radar (VMI - Vertical Maximum Intensity)
-        // Si aggiorna ogni 5 minuti 
+        // ==========================================
+        // LAYER PRINCIPALI (attivi di default)
+        // ==========================================
+
+        // Radar VMI (Vertical Maximum Intensity) - Aggiornamento 5 min
         var radarLayer = L.tileLayer.wms(wmsUrl, {
             layers: 'radar:vmi',
             format: 'image/png',
             transparent: true,
             opacity: 0.7,
             attribution: 'Dati Radar: <a href="https://radar.protezionecivile.it/">DPC</a>'
-        }).addTo(map); // Aggiunto alla mappa di default
+        }).addTo(map);
 
-        // 5. Crea il layer per i Fulmini (LTG - Lightning)
-        // Si aggiorna ogni 10 minuti 
+        // Fulmini LTG (Lightning) - Aggiornamento 10 min
         var fulminiLayer = L.tileLayer.wms(wmsUrl, {
-            layers: 'radar:ltg', // Nome del layer per i fulmini
+            layers: 'radar:ltg',
             format: 'image/png',
             transparent: true,
-            opacity: 1.0, // I fulmini sono spesso puntiformi, meglio tenerli opachi
+            opacity: 1.0,
             attribution: 'Dati Fulmini: <a href="https://radar.protezionecivile.it/">DPC</a>'
-        }).addTo(map); // Aggiunto alla mappa di default
+        }).addTo(map);
 
-        // 6. Aggiungi il controllo per attivare/disattivare i layer
+        // ==========================================
+        // ALTRI LAYER (attivabili dal menu)
+        // ==========================================
+
+        // Intensità di Pioggia al suolo (SRI) - Aggiornamento 5 min
+        var sriLayer = L.tileLayer.wms(wmsUrl, {
+            layers: 'radar:sri',
+            format: 'image/png',
+            transparent: true,
+            opacity: 0.7,
+            attribution: 'Dati Pioggia: <a href="https://radar.protezionecivile.it/">DPC</a>'
+        });
+
+        // Cumulata di Pioggia 1 ora (SRT_1) - Aggiornamento 5 min
+        var srt1Layer = L.tileLayer.wms(wmsUrl, {
+            layers: 'radar:srt1',
+            format: 'image/png',
+            transparent: true,
+            opacity: 0.7,
+            attribution: 'Dati Cumulate: <a href="https://radar.protezionecivile.it/">DPC</a>'
+        });
+
+        // Cumulata di Pioggia 3 ore (SRT_3) - Aggiornamento 60 min
+        var srt3Layer = L.tileLayer.wms(wmsUrl, {
+            layers: 'radar:srt3',
+            format: 'image/png',
+            transparent: true,
+            opacity: 0.7,
+            attribution: 'Dati Cumulate: <a href="https://radar.protezionecivile.it/">DPC</a>'
+        });
+
+        // Temperatura al suolo (TMP) - Aggiornamento 60 min
+        var tempLayer = L.tileLayer.wms(wmsUrl, {
+            layers: 'radar:tmp',
+            format: 'image/png',
+            transparent: true,
+            opacity: 0.6,
+            attribution: 'Dati Temperature: <a href="https://radar.protezionecivile.it/">DPC</a>'
+        });
+
+        // Copertura Nuvolosa (IR108) - Aggiornamento 5 min
+        var nuvoleLayer = L.tileLayer.wms(wmsUrl, {
+            layers: 'radar:ir108',
+            format: 'image/png',
+            transparent: true,
+            opacity: 0.6,
+            attribution: 'Dati Satellitari: <a href="https://radar.protezionecivile.it/">DPC</a>'
+        });
+
+        // Heavy Rain Detection (HRD) - Allerta piogge intense - Aggiornamento 5 min
+        var hrdLayer = L.tileLayer.wms(wmsUrl, {
+            layers: 'radar:hrd',
+            format: 'image/png',
+            transparent: true,
+            opacity: 0.8,
+            attribution: 'Dati HRD: <a href="https://radar.protezionecivile.it/">DPC</a>'
+        });
+
+        // Stato dei Radar (SITES) - Aggiornamento 5 min
+        var sitesLayer = L.tileLayer.wms(wmsUrl, {
+            layers: 'radar:sites',
+            format: 'image/png',
+            transparent: true,
+            opacity: 1.0,
+            attribution: 'Stato Radar: <a href="https://radar.protezionecivile.it/">DPC</a>'
+        });
+
+        // ==========================================
+        // CONTROLLO DEI LAYER (Menu)
+        // ==========================================
         var overlays = {
             "Radar (VMI)": radarLayer,
-            "Fulmini (LTG)": fulminiLayer
+            "Fulmini (LTG)": fulminiLayer,
+            "Intensità Pioggia (SRI)": sriLayer,
+            "Cumulata 1h (SRT_1)": srt1Layer,
+            "Cumulata 3h (SRT_3)": srt3Layer,
+            "Temperature (TMP)": tempLayer,
+            "Copertura Nuvolosa (IR108)": nuvoleLayer,
+            "Allerta Piogge Intense (HRD)": hrdLayer,
+            "Stato Radar (SITES)": sitesLayer
         };
         
         L.control.layers(null, overlays, { collapsed: false }).addTo(map);
 
-        // 7. Aggiornamento automatico per evitare la cache del browser
-        // Forza il ricaricamento delle immagini ogni 5 minuti
+        // ==========================================
+        // AGGIORNAMENTO AUTOMATICO
+        // ==========================================
+        // Forza il ricaricamento delle immagini ogni 5 minuti per evitare la cache
         setInterval(function() {
             radarLayer.setParams({ _t: Date.now() });
             fulminiLayer.setParams({ _t: Date.now() });
-        }, 300000); // 300.000 ms = 5 minuti
+            sriLayer.setParams({ _t: Date.now() });
+            srt1Layer.setParams({ _t: Date.now() });
+            tempLayer.setParams({ _t: Date.now() });
+            nuvoleLayer.setParams({ _t: Date.now() });
+            hrdLayer.setParams({ _t: Date.now() });
+        }, 300000); // 5 minuti
 
     </script>
 </body>
