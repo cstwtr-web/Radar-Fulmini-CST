@@ -6,28 +6,52 @@
     <meta name="theme-color" content="#0d47a1">
     <title>Radar e Fulmini DPC</title>
     <link rel="manifest" href="manifest.json">
+    
+    <!-- Libreria Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <style>
         body { padding: 0; margin: 0; }
         html, body, #map { height: 100%; width: 100vw; }
-        .leaflet-control-layers { background: rgba(255, 255, 255, 0.95); padding: 10px; border-radius: 8px; font-size: 14px; max-height: 80vh; overflow-y: auto; }
-        .leaflet-control-layers label { margin-bottom: 5px; display: block; }
+        
+        /* Stile per il menu a scomparsa */
+        .leaflet-control-layers {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .leaflet-control-layers label { 
+            margin-bottom: 6px; 
+            display: block; 
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
+
     <div id="map"></div>
+
     <script>
+        // 1. Inizializza la mappa
         var map = L.map('map').setView([42.5, 12.5], 6);
+
+        // 2. Mappa di base
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         }).addTo(map);
-        
+
+        // 3. URL del servizio
         var wmsUrl = 'https://radar-geowebcache.protezionecivile.it/service/wms';
 
-        var radarLayer = L.tileLayer.wms(wmsUrl, { layers: 'radar:vmi', format: 'image/png', transparent: true, opacity: 0.7, attribution: 'DPC' }).addTo(map);
-        var fulminiLayer = L.tileLayer.wms(wmsUrl, { layers: 'radar:ltg', format: 'image/png', transparent: true, opacity: 1.0, attribution: 'DPC' }).addTo(map);
+        // ==========================================
+        // CREAZIONE DEI LAYER (senza Temperature)
+        // ==========================================
+        var radarLayer = L.tileLayer.wms(wmsUrl, { layers: 'radar:vmi', format: 'image/png', transparent: true, opacity: 0.7 }).addTo(map);
+        var fulminiLayer = L.tileLayer.wms(wmsUrl, { layers: 'radar:ltg', format: 'image/png', transparent: true, opacity: 1.0 }).addTo(map);
         var sriLayer = L.tileLayer.wms(wmsUrl, { layers: 'radar:sri', format: 'image/png', transparent: true, opacity: 0.7 });
         var srt1Layer = L.tileLayer.wms(wmsUrl, { layers: 'radar:srt1', format: 'image/png', transparent: true, opacity: 0.7 });
         var srt3Layer = L.tileLayer.wms(wmsUrl, { layers: 'radar:srt3', format: 'image/png', transparent: true, opacity: 0.7 });
@@ -35,6 +59,9 @@
         var hrdLayer = L.tileLayer.wms(wmsUrl, { layers: 'radar:hrd', format: 'image/png', transparent: true, opacity: 0.8 });
         var sitesLayer = L.tileLayer.wms(wmsUrl, { layers: 'radar:sites', format: 'image/png', transparent: true, opacity: 1.0 });
 
+        // ==========================================
+        // MENU A SCOMPARSA (collapsed: true)
+        // ==========================================
         var overlays = {
             "Radar (VMI)": radarLayer,
             "Fulmini (LTG)": fulminiLayer,
@@ -45,8 +72,14 @@
             "Allerta Piogge Intense (HRD)": hrdLayer,
             "Stato Radar (SITES)": sitesLayer
         };
-        L.control.layers(null, overlays, { collapsed: false }).addTo(map);
+        
+        // L'opzione { collapsed: true } fa apparire solo l'icona. 
+        // Cliccandola si apre il menu.
+        L.control.layers(null, overlays, { collapsed: true, position: 'topright' }).addTo(map);
 
+        // ==========================================
+        // AGGIORNAMENTO AUTOMATICO (Cache)
+        // ==========================================
         setInterval(function() {
             var now = Date.now();
             radarLayer.setParams({ _t: now });
